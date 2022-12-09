@@ -2,13 +2,13 @@ package orm
 
 import (
 	"context"
-	"errors"
-	"reflect"
+	"leason-toy-orm/orm/internal/errs"
 	"strings"
 )
 
 type Selector[T any] struct {
 	table string
+	model *model
 	where []Predicate
 	sb    *strings.Builder
 	args  []any
@@ -18,11 +18,15 @@ func (s *Selector[T]) Build() (*Query, error) {
 	s.sb = &strings.Builder{}
 	s.sb.WriteString("SELECT * FROM ")
 
+	var err error
+	s.model, err = parseModel(new(T))
+	if err != nil {
+		return nil, err
+	}
+
 	if s.table == "" {
 		s.sb.WriteByte('`')
-		var t T
-		typ := reflect.TypeOf(t)
-		s.sb.WriteString(typ.Name())
+		s.sb.WriteString(s.model.tableName)
 		s.sb.WriteByte('`')
 	} else {
 		s.sb.WriteString(s.table)
@@ -79,14 +83,18 @@ func (s *Selector[T]) buildExpression(e Expression) error {
 		}
 	case Column:
 		s.sb.WriteByte('`')
-		s.sb.WriteString(exp.name)
+		fd, ok := s.model.fields[exp.name]
+		if !ok {
+			return errs.NewErrUnknownField(exp.name)
+		}
+		s.sb.WriteString(fd.colName)
 		s.sb.WriteByte('`')
 
 	case Value:
 		s.sb.WriteByte('?')
 		s.addArgs(exp.val)
 	default:
-		return errors.New("invalid type")
+		return errs.NewErrUnsupportedExpression(exp)
 	}
 
 	return nil
