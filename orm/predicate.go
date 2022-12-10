@@ -61,6 +61,16 @@ func (c Column) GT(arg any) Predicate {
 	}
 }
 
+func (c Column) EQ(arg any) Predicate {
+	return Predicate{
+		left: c,
+		op:   opEq,
+		right: Value{
+			val: arg,
+		},
+	}
+}
+
 func (c Column) LT(arg any) Predicate {
 	return Predicate{
 		left: c,
