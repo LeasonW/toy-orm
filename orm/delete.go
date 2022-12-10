@@ -11,16 +11,24 @@ type Deleter[T any] struct {
 	model     *model
 	args      []any
 	wheres    []Predicate
+
+	db *DB
+}
+
+func NewDeleter[T any](db *DB) *Deleter[T] {
+	return &Deleter[T]{
+		sb: &strings.Builder{},
+		db: db,
+	}
 }
 
 func (d *Deleter[T]) Build() (*Query, error) {
 	var err error
-	d.model, err = parseModel(new(T))
+	d.model, err = d.db.r.get(new(T))
 	if err != nil {
 		return nil, err
 	}
 
-	d.sb = &strings.Builder{}
 	d.sb.WriteString("DELETE FROM ")
 
 	if d.tableName != "" {

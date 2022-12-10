@@ -1,12 +1,15 @@
 package orm
 
 import (
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDeleter_Build(t *testing.T) {
+	db, err := NewDB()
+	require.NoError(t, err)
 	testCases := []struct {
 		name      string
 		builder   QueryBuilder
@@ -15,14 +18,14 @@ func TestDeleter_Build(t *testing.T) {
 	}{
 		{
 			name:    "no where",
-			builder: (&Deleter[TestModel]{}).From("`test_model`"),
+			builder: (NewDeleter[TestModel](db)).From("`test_model`"),
 			wantQuery: &Query{
 				SQL: "DELETE FROM `test_model`;",
 			},
 		},
 		{
 			name:    "where",
-			builder: (&Deleter[TestModel]{}).Where(C("Id").EQ(16)),
+			builder: (NewDeleter[TestModel](db)).Where(C("Id").EQ(16)),
 			wantQuery: &Query{
 				SQL:  "DELETE FROM `test_model` WHERE `id` = ?;",
 				Args: []any{16},
@@ -30,7 +33,7 @@ func TestDeleter_Build(t *testing.T) {
 		},
 		{
 			name:    "from",
-			builder: (&Deleter[TestModel]{}).From("`test_model`").Where(C("Id").EQ(16)),
+			builder: (NewDeleter[TestModel](db)).From("`test_model`").Where(C("Id").EQ(16)),
 			wantQuery: &Query{
 				SQL:  "DELETE FROM `test_model` WHERE `id` = ?;",
 				Args: []any{16},
@@ -38,7 +41,7 @@ func TestDeleter_Build(t *testing.T) {
 		},
 		{
 			name:    "not",
-			builder: (&Deleter[TestModel]{}).From("`test_model`").Where(Not(C("Id").EQ(16))),
+			builder: (NewDeleter[TestModel](db)).From("`test_model`").Where(Not(C("Id").EQ(16))),
 			wantQuery: &Query{
 				SQL:  "DELETE FROM `test_model` WHERE NOT (`id` = ?);",
 				Args: []any{16},
@@ -46,7 +49,7 @@ func TestDeleter_Build(t *testing.T) {
 		},
 		{
 			name:    "and",
-			builder: (&Deleter[TestModel]{}).From("`test_model`").Where(C("Id").GT(16).And(C("Id").LT(35))),
+			builder: (NewDeleter[TestModel](db)).From("`test_model`").Where(C("Id").GT(16).And(C("Id").LT(35))),
 			wantQuery: &Query{
 				SQL:  "DELETE FROM `test_model` WHERE (`id` > ?) AND (`id` < ?);",
 				Args: []any{16, 35},

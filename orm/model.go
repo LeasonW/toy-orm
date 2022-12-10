@@ -3,6 +3,7 @@ package orm
 import (
 	"leason-toy-orm/orm/internal/errs"
 	"reflect"
+	"sync"
 	"unicode"
 )
 
@@ -15,8 +16,31 @@ type field struct {
 	colName string
 }
 
+type registry struct {
+	models sync.Map
+}
+
+func newRegistry() *registry {
+	return &registry{}
+}
+
+func (r *registry) get(val any) (*model, error) {
+	typ := reflect.TypeOf(val)
+
+	m, ok := r.models.Load(typ)
+	if ok {
+		return m.(*model), nil
+	}
+	m, err := r.parseModel(val)
+	if err != nil {
+		return nil, err
+	}
+	r.models.Store(typ, m)
+	return m.(*model), nil
+}
+
 // parseModel 限制只能使用一级指针
-func parseModel(entity any) (*model, error) {
+func (r *registry) parseModel(entity any) (*model, error) {
 	typ := reflect.TypeOf(entity)
 	if typ.Kind() != reflect.Pointer || typ.Elem().Kind() != reflect.Struct {
 		return nil, errs.ErrPointerOnly
