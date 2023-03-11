@@ -8,7 +8,7 @@ import (
 type Deleter[T any] struct {
 	tableName string
 	sb        *strings.Builder
-	model     *model
+	model     *Model
 	args      []any
 	wheres    []Predicate
 
@@ -24,7 +24,7 @@ func NewDeleter[T any](db *DB) *Deleter[T] {
 
 func (d *Deleter[T]) Build() (*Query, error) {
 	var err error
-	d.model, err = d.db.r.get(new(T))
+	d.model, err = d.db.r.Get(new(T))
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (d *Deleter[T]) Build() (*Query, error) {
 	}, nil
 }
 
-// From accepts model definition
+// From accepts Model definition
 func (d *Deleter[T]) From(table string) *Deleter[T] {
 	d.tableName = table
 	return d

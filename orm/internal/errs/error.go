@@ -16,3 +16,7 @@ func NewErrUnsupportedExpression(expr any) error {
 func NewErrUnknownField(name string) error {
 	return fmt.Errorf("orm: invalid field %s", name)
 }
+
+func NewErrInvalidTagContent(pair string) error {
+	return fmt.Errorf("orm: invalid tag content %s", pair)
+}
